@@ -300,6 +300,34 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
     return fname, rec
 
 
+SCHEMA = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "nk-db series",
+    "type": "object",
+    "required": ["id", "source", "pol", "unit", "kind", "range_nm", "points", "data"],
+    "properties": {
+        "id": {"type": "string"},
+        "source": {"type": "string"},
+        "pol": {"type": "string"},
+        "source_file": {"type": "string"},
+        "unit": {"const": "nm"},
+        "kind": {"enum": ["table", "sellmeier"]},
+        "range_nm": {"type": ["array", "null"], "items": {"type": "number"}},
+        "points": {"type": ["integer", "null"]},
+        "model": {"type": "object"},
+        "data": {
+            "type": "object",
+            "required": ["wl", "n", "k"],
+            "properties": {
+                "wl": {"type": "array", "items": {"type": "number"}},
+                "n": {"type": "array", "items": {"type": "number"}},
+                "k": {"type": "array", "items": {"type": "number"}},
+            },
+        },
+    },
+}
+
+
 def main():
     OUT_DB.mkdir(exist_ok=True)
     OUT_CAT.mkdir(exist_ok=True)
@@ -369,6 +397,8 @@ def main():
         best = max(rows, key=lambda r: 1 if abs(r[1] - r[2]) < 0.1 * r[2] else 0)
         if abs(best[1] - best[2]) > 0.1 * best[2]:
             stats["sanity"].append([mid, best[0], round(best[1], 5), best[2]])
+
+    (OUT_DB / "_schema.json").write_text(json.dumps(SCHEMA, indent=1), encoding="utf-8")
 
     (ROOT / "catalog.json").write_text(
         json.dumps({"schema": "nk-catalog/1", "generated": "2026-11-02", "materials": catalog},

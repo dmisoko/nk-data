@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nk - refractive index data for machines</title>
+<style>
+  body { font: 16px/1.6 -apple-system, Segoe UI, Roboto, sans-serif; max-width: 44rem; margin: 4rem auto; padding: 0 1.5rem; color: #1a1a1a; }
+  code { background: #f2f2f2; padding: .15em .35em; border-radius: 3px; }
+  pre { background: #f6f6f6; padding: 1rem; overflow-x: auto; border-radius: 6px; }
+  h1 { font-size: 1.7rem; }
+  table { border-collapse: collapse; }
+  td, th { padding: .3rem .8rem .3rem 0; text-align: left; border-bottom: 1px solid #eee; }
+</style>
+</head>
+<body>
+<h1>nk - refractive index data for machines</h1>
+<p>Static, no authentication, no API key, no clone. A client resolves a material and
+fetches exactly one small JSON file.</p>
+
+<h2>Two requests</h2>
+<pre><code>GET /catalog.json          search index (names, formulas, aliases, variants)
+GET /db/&lt;material&gt;.&lt;source&gt;.json   one material, one source, wavelengths in nm</code></pre>
+
+<p>Every material file stores <code>wl</code> (nm, ascending), <code>n</code> and <code>k</code>
+as parallel arrays. A <code>pol</code> field distinguishes the ordinary / extraordinary ray.</p>
+
+<h2>Endpoint</h2>
+<table>
+<tr><th>Channel</th><th>Base URL</th></tr>
+<tr><td>GitHub Pages</td><td><code>https://dmisoko.github.io/nk/</code></td></tr>
+<tr><td>jsDelivr mirror</td><td><code>https://cdn.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
+</table>
+
+<h2>Coverage</h2>
+<p>Over 1400 materials from Palik, SOPRA, Windt, refractiveindex.info, FreeSnell,
+Setfos and the KLA refractive index database. Coverage query:
+<code>catalog/ranges.json</code>.</p>
+
+<p>Provenance and licensing: <a href="NOTICE.md">NOTICE.md</a>.</p>
+</body>
+</html>

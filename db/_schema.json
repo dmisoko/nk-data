@@ -1,0 +1,84 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "nk-db series",
+ "type": "object",
+ "required": [
+  "id",
+  "source",
+  "pol",
+  "unit",
+  "kind",
+  "range_nm",
+  "points",
+  "data"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "source": {
+   "type": "string"
+  },
+  "pol": {
+   "type": "string"
+  },
+  "source_file": {
+   "type": "string"
+  },
+  "unit": {
+   "const": "nm"
+  },
+  "kind": {
+   "enum": [
+    "table",
+    "sellmeier"
+   ]
+  },
+  "range_nm": {
+   "type": [
+    "array",
+    "null"
+   ],
+   "items": {
+    "type": "number"
+   }
+  },
+  "points": {
+   "type": [
+    "integer",
+    "null"
+   ]
+  },
+  "model": {
+   "type": "object"
+  },
+  "data": {
+   "type": "object",
+   "required": [
+    "wl",
+    "n",
+    "k"
+   ],
+   "properties": {
+    "wl": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     }
+    },
+    "n": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     }
+    },
+    "k": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     }
+    }
+   }
+  }
+ }
+}
