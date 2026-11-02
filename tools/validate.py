@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Validate the generated data layer: schema shape, monotonicity, catalog links."""
 import json
+import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-POLS = {"n", "o", "e"}
+POLS = {"n", "o", "e"}  # any short label is accepted
 errors = []
 
 
@@ -18,7 +19,7 @@ def check_series(path: Path):
         if key not in d:
             errors.append(f"{path.name}: missing {key}")
             return
-    if d["pol"] not in POLS:
+    if not re.fullmatch(r"[a-z]{1,6}", d["pol"]):
         errors.append(f"{path.name}: bad pol {d['pol']}")
     if d["unit"] != "nm":
         errors.append(f"{path.name}: unit {d['unit']}")

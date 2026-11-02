@@ -2,6 +2,11 @@
 # Publish the data layer: push master, enable GitHub Pages, tag, verify.
 set -u
 cd "$(dirname "$0")/.." || exit 1
+if [ "${CONFIRM_PUBLISH:-0}" != "1" ]; then
+  echo "Refusing to publish: this script pushes to GitHub and creates a tag."
+  echo "Re-run as: CONFIRM_PUBLISH=1 bash tools/publish.sh"
+  exit 1
+fi
 REPO="dmisoko/nk"
 BASE="https://dmisoko.github.io/nk"
 

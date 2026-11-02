@@ -275,7 +275,11 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
             last = w
     order = dedup
     wl_s = [round(wl[i], 5) for i in order]
-    kv = [(0.0 if (v < 0 and v > -0.05) else v) for v in kv]
+    # k must be non-negative. Some KLA charts plot -k, so flip sign when the
+    # whole series is negative; residual small negatives are measurement noise.
+    if kv and sum(1 for v in kv if v < 0) > 0.9 * len(kv):
+        kv = [-v for v in kv]
+    kv = [max(v, 0.0) for v in kv]
     rec = {
         "id": material_id,
         "source": source,

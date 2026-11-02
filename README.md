@@ -113,9 +113,9 @@ ulfgri@gmail.com
 
 A machine-readable layer is generated from the original files:
 
-- `catalog.json` — search index (names, formulas, variants)
-- `catalog/ranges.json` — wavelength coverage per material
-- `db/*.json` — one file per material and source, wavelengths in nanometres
+- `catalog.json` - search index (names, formulas, variants)
+- `catalog/ranges.json` - wavelength coverage per material
+- `db/*.json` - one file per material and source, wavelengths in nanometres
 
 Fetch any material with two plain HTTPS GET requests, no clone and no token:
 

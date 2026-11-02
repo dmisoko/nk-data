@@ -1,4 +1,4 @@
-# Refractive index data — machine access contract
+# Refractive index data - machine access contract
 
 This repository publishes a derived, machine-readable data layer next to the
 original `.nk` files. Everything is plain static HTTPS: **no API key, no
@@ -10,13 +10,13 @@ authentication, no `git clone`**. Two GET requests fetch any material.
 |---|---|---|
 | Search index | `catalog.json` | ~118 KB |
 | Wavelength coverage only | `catalog/ranges.json` | ~45 KB |
-| One material, one source | `db/<id>.<source>.json` | 2–40 KB |
+| One material, one source | `db/<id>.<source>.json` | 2-40 KB |
 | JSON Schema for `db/` files | `db/_schema.json` | ~2 KB |
 
 Two interchangeable bases, **identical path suffix**:
 
-1. `https://dmisoko.github.io/nk/`            (GitHub Pages — preferred)
-2. `https://cdn.jsdelivr.net/gh/dmisoko/nk@main/`  (jsDelivr — fallback)
+1. `https://dmisoko.github.io/nk/`            (GitHub Pages - preferred)
+2. `https://cdn.jsdelivr.net/gh/dmisoko/nk@main/`  (jsDelivr - fallback)
 
 Switch base only; never change the path. Do not use `api.github.com`
 (60 requests/hour per IP) and do not use `raw.githubusercontent.com` in
@@ -49,10 +49,10 @@ material and locate its file.
 ```
 
 - `materials` is an object keyed by a lowercase slug.
-- `id` — display name as used in the original source.
-- `f` — chemical formula when the file name is a formula (`Al2O3`), else `null`.
-- `a` — extra aliases (may be empty).
-- `v` — variants: `[source, path]` (`source:pol` for anisotropic series),
+- `id` - display name as used in the original source.
+- `f` - chemical formula when the file name is a formula (`Al2O3`), else `null`.
+- `a` - extra aliases (may be empty).
+- `v` - variants: `[source, path]` (`source:pol` for anisotropic series),
   **ordered by preference**: use `v[0]` by default, override only for a reason
   (required wavelength range, `k` behaviour for metals, polarisation).
   Preference order is `kla`, `palik`, `sopra`, `windt`, `rii`, `setfos`,
@@ -104,14 +104,14 @@ series only; `kind: "sellmeier"` entries have no wavelength grid and are absent:
 {"unit": "nm", "materials": {"au": [12.4, 1000000.0], "...": ["min", "max"]}}
 ```
 
-Otherwise fetch the single material file — its `range_nm` is the authoritative
+Otherwise fetch the single material file - its `range_nm` is the authoritative
 answer for that variant.
 
 ## Token budget
 
 The catalog is up to ~100 KB; never paste it into a prompt. With code
 execution, fetch it inside the script and print only the matched entries
-(a few hundred bytes). One material file is 2–40 KB and only the requested
+(a few hundred bytes). One material file is 2-40 KB and only the requested
 wavelength interval matters.
 
 ## Provenance
