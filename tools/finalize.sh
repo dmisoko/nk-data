@@ -9,7 +9,8 @@ for i in $(seq 1 240); do
   sleep 60
 done
 sleep 20
-bash tools/retry_kla.sh > /tmp/finalize_retry.log 2>&1
+for w in 0 1 2; do WORKER=$w WORKERS=3 bash tools/retry_kla.sh > "/tmp/retry_$w.log" 2>&1 & done; wait
+cat /tmp/retry_failed_*.txt 2>/dev/null | sort -u > sources/kla/failed.txt
 python3 tools/extract_kla.py > /tmp/finalize_extract.log 2>&1
 rm -rf db catalog
 python3 tools/build_db.py > /tmp/finalize_build.log 2>&1
