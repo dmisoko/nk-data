@@ -1,7 +1,7 @@
 {
- "files_scanned": 1321,
- "records_written": 1343,
- "materials": 1051,
+ "files_scanned": 1590,
+ "records_written": 1607,
+ "materials": 1277,
  "skipped": [
   [
    "palik/Al2O3-B.nk",
@@ -69,6 +69,6 @@
   ]
  ],
  "sanity_failures": [],
- "db_bytes": 10592857,
- "catalog_bytes": 95223
+ "db_bytes": 12142468,
+ "catalog_bytes": 117136
 }

@@ -140,6 +140,19 @@ def parse_table(rows, ncols, hint):
     return {"n": (wl, [r[1] for r in rows], [r[2] for r in rows])}
 
 
+def kla_identity(rec):
+    """KLA titles look like 'Refractive Index of Ag, Silver for Thin Film ...'."""
+    name = re.sub(r"^Refractive Index of ", "", rec.get("name", ""))
+    name = re.sub(r"\s+for Thin Film.*$", "", name).strip()
+    parts = [p.strip() for p in name.split(",") if p.strip()]
+    primary = parts[0] if parts else rec.get("slug", "")
+    aliases = parts[1:]
+    base = re.sub(r"\s*\([^)]*\)\s*", " ", primary).strip()
+    if base and base.lower() != primary.lower():
+        aliases.append(base)
+    return primary, aliases
+
+
 def series_from_file(path, source):
     """Return {polarisation: (wl_nm, n, k)} or None."""
     if source == "kla":
@@ -211,6 +224,7 @@ def main():
     OUT_CAT.mkdir(exist_ok=True)
     catalog = {}
     sanity_seen = {}
+    seen_kla = set()
 
     def handle(path, source, rel):
         stats["files"] += 1
@@ -219,19 +233,24 @@ def main():
             stats["skipped"].append([rel, "no_series"])
             return
         mid = path.stem.strip()
+        alias = []
+        if source == "kla":
+            rec_kla = json.loads(path.read_text(encoding="utf-8"))
+            mid, alias = kla_identity(rec_kla)
+            pol0 = series["n"]
+            key = (mid.lower(), len(pol0[0]), round(pol0[0][0], 3), round(pol0[0][-1], 3))
+            if key in seen_kla:
+                return
+            seen_kla.add(key)
         for pol, (wl, nv, kv) in series.items():
             if not wl:
                 continue
             fname, rec = emit(mid, source, pol, wl, nv, kv, rel)
             entry = catalog.setdefault(mid.lower(), {"id": mid, "v": []})
-            if source == "kla":
-                name = json.loads(path.read_text(encoding="utf-8")).get("name", "")
-                name = re.sub(r"^Refractive Index of ", "", name)
-                name = re.sub(r"\s+for Thin Film.*$", "", name)
-                alias = {a.strip() for a in name.split(",") if a.strip()}
-                alias |= set(entry.get("a", []))
-                alias.discard(mid)
-                entry["a"] = sorted(alias)
+            if alias:
+                merged = {a for a in alias if a and a.lower() != mid.lower()}
+                merged |= set(entry.get("a", []))
+                entry["a"] = sorted(merged)
             entry["v"].append([source if pol == "n" else f"{source}:{pol}", f"db/{fname}"])
             if mid in SANITY and pol == "n":
                 x, ref = SANITY[mid]
