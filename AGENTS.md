@@ -8,7 +8,7 @@ authentication, no `git clone`**. Two GET requests fetch any material.
 
 | Purpose | Path | Typical size |
 |---|---|---|
-| Search index | `catalog.json` | ~125 KB |
+| Search index | `catalog.json` | ~118 KB |
 | Wavelength coverage only | `catalog/ranges.json` | ~45 KB |
 | One material, one source | `db/<id>.<source>.json` | 2–40 KB |
 | JSON Schema for `db/` files | `db/_schema.json` | ~2 KB |
@@ -97,7 +97,8 @@ One file holds exactly one series: one material, one source, one polarisation.
 
 `catalog.json` intentionally omits wavelength ranges to keep it small. If a
 question is about coverage ("which material covers 1550 nm?", "what is the
-widest range for gold?"), fetch `catalog/ranges.json` once:
+widest range for gold?"), fetch `catalog/ranges.json` once. It lists tabulated
+series only; `kind: "sellmeier"` entries have no wavelength grid and are absent:
 
 ```json
 {"unit": "nm", "materials": {"au": [12.4, 1000000.0], "...": ["min", "max"]}}
