@@ -1,0 +1,1 @@
+{"id":"BK7","source":"analytic","pol":"n","source_file":"analytic/n_BK7.m","unit":"nm","kind":"sellmeier","range_nm":null,"points":null,"model":{"formula":"n^2 = 1 + sum(A_i * l^2 / (l^2 - B_i)), l in um","terms":[[1.03961212,0.00600069867],[0.231792344,0.0200179144],[1.01046945,103.560653]]}}

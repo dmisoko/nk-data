@@ -22,6 +22,8 @@ OUT_CAT = ROOT / "catalog"
 EV_TO_UM = 1.239841984
 UNIT_HINT = {"windt": "angstrom", "unight": "nm", "kla": "nm"}
 SENTINEL = -0.0001
+SOURCE_RANK = {"kla": 0, "palik": 1, "sopra": 2, "windt": 3, "rii": 4,
+               "setfos": 5, "unight": 6, "coatings": 7, "litho": 8, "various": 9, "freesnell": 10}
 SANITY = {"SiO2": (550.0, 1.46), "Si": (632.8, 3.88), "Ag": (632.8, 0.135),
           "TiO2": (550.0, 2.90), "MgF2": (550.0, 1.38), "Au": (632.8, 0.183)}
 stats = {"files": 0, "records": 0, "skipped": [], "sanity": []}
@@ -117,16 +119,38 @@ def parse_palik(path):
             wl.append(r[um_idx] * 1000.0)
             ns.append(r[ni])
             ks.append(kv)
-        real_k = sum(1 for v in ks if v > 1e-4)
-        if real_k > 0.2 * len(ks):
-            keep = [i for i, v in enumerate(ks) if not is_sentinel(v)]
-        else:
-            keep = list(range(len(ks)))
+        keep = [i for i, v in enumerate(ns) if not is_sentinel(v)]
         if not keep:
             continue
-        out[pol] = ([wl[i] for i in keep], [ns[i] for i in keep],
-                    [0.0 if is_sentinel(ks[i]) else ks[i] for i in keep])
+        wl = [wl[i] for i in keep]
+        ns = [ns[i] for i in keep]
+        ks = [ks[i] for i in keep]
+        out[pol] = (wl, ns, fill_missing_k(ks))
     return out or None
+
+
+def fill_missing_k(ks):
+    """-0.0001 marks "no k value" in Palik tables.
+
+    Between two absorbing neighbours (k > 0.05) the gap is interpolated; next to
+    transparent regions it is treated as k = 0, which is what the sentinel means
+    for dielectrics.
+    """
+    out = list(ks)
+    n = len(out)
+    for i, v in enumerate(ks):
+        if not is_sentinel(v):
+            continue
+        prev = next((ks[j] for j in range(i - 1, -1, -1) if not is_sentinel(ks[j])), None)
+        nxt = next((ks[j] for j in range(i + 1, n) if not is_sentinel(ks[j])), None)
+        if prev is not None and nxt is not None and prev > 0.05 and nxt > 0.05:
+            pi = next(j for j in range(i - 1, -1, -1) if not is_sentinel(ks[j]))
+            ni = next(j for j in range(i + 1, n) if not is_sentinel(ks[j]))
+            t = (i - pi) / (ni - pi)
+            out[i] = prev + t * (nxt - prev)
+        else:
+            out[i] = 0.0
+    return out
 
 
 def parse_table(rows, ncols, hint):
@@ -187,6 +211,42 @@ def series_from_file(path, source):
     if hint is None:
         hint = UNIT_HINT.get(source)
     return parse_table(rows, ncols, hint)
+
+
+def parse_analytic(path):
+    """Sellmeier-style MATLAB models: A1..An / B1..Bn plus the dispersion formula."""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if "sellmeir" not in text.lower() and "sellmeier" not in text.lower():
+        return None
+    a = {int(m.group(1)): float(m.group(2)) for m in re.finditer(r"^\s*A(\d+)\s*=\s*([-+0-9.eE]+)\s*;", text, re.M)}
+    b = {int(m.group(1)): float(m.group(2)) for m in re.finditer(r"^\s*B(\d+)\s*=\s*([-+0-9.eE]+)\s*;", text, re.M)}
+    terms = [[a[k], b[k]] for k in sorted(a) if k in b]
+    if not terms:
+        nums = {m.group(1): float(m.group(2))
+                for m in re.finditer(r"^\s*([A-Z])N\s*=\s*([-+0-9.eE]+)\s*;", text, re.M)}
+        dens = {m.group(1): float(m.group(2))
+                for m in re.finditer(r"^\s*([A-Z])D\s*=\s*([-+0-9.eE]+)\s*;", text, re.M)}
+        terms = [[nums[k], dens[k]] for k in sorted(nums) if k in dens]
+    return terms or None
+
+
+def emit_model(material_id, source, terms, source_file):
+    rec = {
+        "id": material_id,
+        "source": source,
+        "pol": "n",
+        "source_file": source_file,
+        "unit": "nm",
+        "kind": "sellmeier",
+        "range_nm": None,
+        "points": None,
+        "model": {"formula": "n^2 = 1 + sum(A_i * l^2 / (l^2 - B_i)), l in um",
+                  "terms": terms},
+    }
+    fname = f"{material_id.lower()}.{source}.json"
+    (OUT_DB / fname).write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
+    stats["records"] += 1
+    return fname
 
 
 def emit(material_id, source, pol, wl, nv, kv, source_file):
@@ -261,6 +321,17 @@ def main():
     for src in REPO_SOURCES:
         for p in sorted((ROOT / src).rglob("*.nk")):
             handle(p, src, str(p.relative_to(ROOT)))
+    for p in sorted((ROOT / "analytic").glob("n_*.m")):
+        stats["files"] += 1
+        terms = parse_analytic(p)
+        if not terms:
+            stats["skipped"].append([str(p.relative_to(ROOT)), "no_sellmeier"])
+            continue
+        mid = p.stem[2:]
+        fname = emit_model(mid, "analytic", terms, str(p.relative_to(ROOT)))
+        entry = catalog.setdefault(mid.lower(), {"id": mid, "v": [], "a": []})
+        entry["v"].append(["analytic", f"db/{fname}"])
+
     for src, base in EXTRA_SOURCES:
         if not base.exists():
             continue
@@ -271,7 +342,7 @@ def main():
     for slug, entry in catalog.items():
         stem = entry["id"]
         entry["f"] = stem if re.match(r"^[A-Z][a-z]?(?:\d+)?(?:[A-Z][a-z]?\d*)+$", stem) else None
-        entry["v"].sort()
+        entry["v"].sort(key=lambda x: (SOURCE_RANK.get(x[0].split(":")[0], 99), x[0], x[1]))
 
     for mid, rows in sanity_seen.items():
         best = max(rows, key=lambda r: 1 if abs(r[1] - r[2]) < 0.1 * r[2] else 0)
@@ -285,7 +356,9 @@ def main():
     ranges = {}
     for slug, entry in catalog.items():
         vals = [json.loads((ROOT / rel).read_text(encoding="utf-8"))["range_nm"] for _, rel in entry["v"]]
-        ranges[slug] = [min(v[0] for v in vals), max(v[1] for v in vals)]
+        vals = [v for v in vals if v]
+        if vals:
+            ranges[slug] = [min(v[0] for v in vals), max(v[1] for v in vals)]
     (OUT_CAT / "ranges.json").write_text(
         json.dumps({"unit": "nm", "materials": ranges}, separators=(",", ":")), encoding="utf-8")
 

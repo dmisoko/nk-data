@@ -1,7 +1,7 @@
 {
- "files_scanned": 1590,
- "records_written": 1607,
- "materials": 1277,
+ "files_scanned": 1609,
+ "records_written": 1614,
+ "materials": 1280,
  "skipped": [
   [
    "palik/Al2O3-B.nk",
@@ -44,6 +44,54 @@
    "no_series"
   ],
   [
+   "analytic/n_BF33.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_CaF2.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_H2O_ice.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_LASF35.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_MgF2e.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_MgF2o.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_Nb2O5.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_PMMA.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_ZnS.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_air.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_rii.m",
+   "no_sellmeier"
+  ],
+  [
+   "analytic/n_vacuum.m",
+   "no_sellmeier"
+  ],
+  [
    "setfos/2TNATA_interpolated",
    "no_series"
   ],
@@ -69,6 +117,6 @@
   ]
  ],
  "sanity_failures": [],
- "db_bytes": 12142468,
- "catalog_bytes": 117136
+ "db_bytes": 12155357,
+ "catalog_bytes": 117564
 }

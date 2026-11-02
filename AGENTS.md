@@ -8,7 +8,7 @@ authentication, no `git clone`**. Two GET requests fetch any material.
 
 | Purpose | Path | Typical size |
 |---|---|---|
-| Search index | `catalog.json` | ~100 KB |
+| Search index | `catalog.json` | ~125 KB |
 | Wavelength coverage only | `catalog/ranges.json` | ~45 KB |
 | One material, one source | `db/<id>.<source>.json` | 2–40 KB |
 | JSON Schema for `db/` files | `db/_schema.json` | ~2 KB |
@@ -52,9 +52,11 @@ material and locate its file.
 - `id` — display name as used in the original source.
 - `f` — chemical formula when the file name is a formula (`Al2O3`), else `null`.
 - `a` — extra aliases (may be empty).
-- `v` — variants: `[source, path]` (`source:pol` for anisotropic series). The
-  same material exists in several sources; pick by required wavelength range,
-  by `k` behaviour (metals need non-zero `k`) and by `pol` (crystals).
+- `v` — variants: `[source, path]` (`source:pol` for anisotropic series),
+  **ordered by preference**: use `v[0]` by default, override only for a reason
+  (required wavelength range, `k` behaviour for metals, polarisation).
+  Preference order is `kla`, `palik`, `sopra`, `windt`, `rii`, `setfos`,
+  `unight`, `coatings`, `litho`, `various`, `freesnell`.
 
 Match strategy: normalize the query (lowercase, strip spaces/punctuation),
 then try exact key, then `id`/`f`/`a` equality, then substring. Example:
