@@ -10,3 +10,6 @@ sources/kla/raw/
 sources/kla/failed.txt
 sources/kla/skip.txt
 sources/kla/slugs.txt
+
+# local agent instructions (not published)
+AGENTS.md

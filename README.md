@@ -124,5 +124,5 @@ https://dmisoko.github.io/nk/catalog.json
 https://dmisoko.github.io/nk/db/sio2.sopra.json
 ```
 
-See `AGENTS.md` for the full contract and `NOTICE.md` for data provenance.
+See `NOTICE.md` for data provenance.
 Regenerate the derived layer with `python3 tools/build_db.py`.
