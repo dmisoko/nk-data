@@ -28,8 +28,13 @@ as parallel arrays. A <code>pol</code> field distinguishes the ordinary / extrao
 <table>
 <tr><th>Channel</th><th>Base URL</th></tr>
 <tr><td>GitHub Pages</td><td><code>https://dmisoko.github.io/nk/</code></td></tr>
-<tr><td>jsDelivr mirror</td><td><code>https://cdn.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
+<tr><td>jsDelivr mirror</td><td><code>https://fastly.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
+<tr><td>jsDelivr (alt edge)</td><td><code>https://gcore.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
 </table>
+
+<p>Some networks reset TLS connections whose SNI is <code>cdn.jsdelivr.net</code>.
+The <code>fastly.</code> and <code>gcore.</code> hostnames serve byte-identical content
+and are not affected.</p>
 
 <h2>Coverage</h2>
 <p>Over 1400 materials from Palik, SOPRA, Windt, refractiveindex.info, FreeSnell,
