@@ -100,7 +100,7 @@ def parse_palik(path):
         if not (low.startswith("n") or low.startswith("k")):
             continue
         m = re.search(r"\((\w+)\)", lab)
-        pol = m.group(1) if m else "n"
+        pol = m.group(1).lower() if m else "n"
         groups.setdefault(pol, {"n": [], "k": []})
         if pol not in order:
             order.append(pol)
@@ -230,6 +230,22 @@ def parse_analytic(path):
     return terms or None
 
 
+def slugify(text):
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "material"
+
+
+_used_names = set()
+
+
+def unique_name(name):
+    candidate, i = name, 2
+    while candidate in _used_names:
+        candidate = f"{name}-{i}"
+        i += 1
+    _used_names.add(candidate)
+    return candidate
+
+
 def emit_model(material_id, source, terms, source_file):
     rec = {
         "id": material_id,
@@ -243,7 +259,7 @@ def emit_model(material_id, source, terms, source_file):
         "model": {"formula": "n^2 = 1 + sum(A_i * l^2 / (l^2 - B_i)), l in um",
                   "terms": terms},
     }
-    fname = f"{material_id.lower()}.{source}.json"
+    fname = unique_name(f"{slugify(material_id)}.{source}.json")
     (OUT_DB / fname).write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
     stats["records"] += 1
     return fname
@@ -259,6 +275,7 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
             last = w
     order = dedup
     wl_s = [round(wl[i], 5) for i in order]
+    kv = [(0.0 if (v < 0 and v > -0.05) else v) for v in kv]
     rec = {
         "id": material_id,
         "source": source,
@@ -273,7 +290,7 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
                  "k": [round(kv[i], 6) for i in order]},
     }
     suffix = "" if pol == "n" else f".{pol}"
-    fname = f"{material_id.lower()}.{source}{suffix}.json"
+    fname = unique_name(f"{slugify(material_id)}.{source}{suffix}.json")
     (OUT_DB / fname).write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
     stats["records"] += 1
     return fname, rec
