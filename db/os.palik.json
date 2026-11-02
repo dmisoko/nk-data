@@ -1,0 +1,1 @@
+{"id":"Os","source":"palik","pol":"n","source_file":"palik/Os.nk","unit":"nm","kind":"table","range_nm":[-0.1,59.0],"points":3,"data":{"wl":[-0.1,40.0,59.0],"n":[0.81,0.59,0.653],"k":[0.26,0.39,0.973]}}

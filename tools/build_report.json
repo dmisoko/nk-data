@@ -1,0 +1,74 @@
+{
+ "files_scanned": 1321,
+ "records_written": 1343,
+ "materials": 1051,
+ "skipped": [
+  [
+   "palik/Al2O3-B.nk",
+   "no_series"
+  ],
+  [
+   "palik/KDP.nk",
+   "no_series"
+  ],
+  [
+   "palik/SiC-c.nk",
+   "no_series"
+  ],
+  [
+   "rii/D2O_Kedenburg.nk",
+   "no_series"
+  ],
+  [
+   "rii/H2O_Kedenburg.nk",
+   "no_series"
+  ],
+  [
+   "rii/SiO_Hass.nk",
+   "no_series"
+  ],
+  [
+   "freesnell/h2o-ice.nk",
+   "no_series"
+  ],
+  [
+   "freesnell/h2o.nk",
+   "no_series"
+  ],
+  [
+   "freesnell/hdpe.nk",
+   "no_series"
+  ],
+  [
+   "freesnell/pe.nk",
+   "no_series"
+  ],
+  [
+   "setfos/2TNATA_interpolated",
+   "no_series"
+  ],
+  [
+   "setfos/Glass_Schott_AF45",
+   "no_series"
+  ],
+  [
+   "setfos/PBD_interpolated",
+   "no_series"
+  ],
+  [
+   "setfos/TPD_interpolated",
+   "no_series"
+  ],
+  [
+   "setfos/TPT1_interpolated",
+   "no_series"
+  ],
+  [
+   "setfos/alfa-NPD_interpolated",
+   "no_series"
+  ]
+ ],
+ "sanity_failures": [],
+ "db_bytes": 10592857,
+ "catalog_bytes": 95223
+}

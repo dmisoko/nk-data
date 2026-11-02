@@ -4,3 +4,9 @@
 # backup files
 *~
 
+
+# intermediate scrape artifacts
+sources/kla/raw/
+sources/kla/failed.txt
+sources/kla/skip.txt
+sources/kla/slugs.txt

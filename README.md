@@ -107,3 +107,22 @@ Please report inconsistencies, problems, and errors.
 Ulf Griesmann, September 2014
 ulf.griesmann@nist.gov
 ulfgri@gmail.com
+
+
+## Programmatic access
+
+A machine-readable layer is generated from the original files:
+
+- `catalog.json` — search index (names, formulas, variants)
+- `catalog/ranges.json` — wavelength coverage per material
+- `db/*.json` — one file per material and source, wavelengths in nanometres
+
+Fetch any material with two plain HTTPS GET requests, no clone and no token:
+
+```
+https://dmisoko.github.io/nk/catalog.json
+https://dmisoko.github.io/nk/db/sio2.sopra.json
+```
+
+See `AGENTS.md` for the full contract and `NOTICE.md` for data provenance.
+Regenerate the derived layer with `python3 tools/build_db.py`.
