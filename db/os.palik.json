@@ -1,1 +1,1 @@
-{"id":"Os","source":"palik","pol":"n","source_file":"palik/Os.nk","unit":"nm","kind":"table","range_nm":[-0.1,59.0],"points":3,"data":{"wl":[-0.1,40.0,59.0],"n":[0.81,0.59,0.653],"k":[0.26,0.39,0.973]}}
+{"id":"Os","source":"palik","pol":"n","source_file":"palik/Os.nk","unit":"nm","kind":"table","range_nm":[-0.1,59.0],"points":3,"sha1":"2293a2a9677f3c701464300328d42ae9aacf5a5a","processing":{"unit_from":"um","k_zero_filled":0,"k_interpolated":0,"rows_dropped":0,"wl_duplicates_removed":176},"data":{"wl":[-0.1,40.0,59.0],"n":[0.81,0.59,0.653],"k":[0.26,0.39,0.973]}}

@@ -2,83 +2,162 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "title": "nk-db series",
  "type": "object",
- "required": [
-  "id",
-  "source",
-  "pol",
-  "unit",
-  "kind",
-  "range_nm",
-  "points",
-  "data"
+ "oneOf": [
+  {
+   "$ref": "#/$defs/table"
+  },
+  {
+   "$ref": "#/$defs/model"
+  }
  ],
- "properties": {
-  "id": {
-   "type": "string"
-  },
-  "source": {
-   "type": "string"
-  },
-  "pol": {
-   "type": "string"
-  },
-  "source_file": {
-   "type": "string"
-  },
-  "unit": {
-   "const": "nm"
-  },
-  "kind": {
-   "enum": [
-    "table",
-    "sellmeier"
-   ]
-  },
-  "range_nm": {
-   "type": [
-    "array",
-    "null"
+ "$defs": {
+  "common": {
+   "type": "object",
+   "required": [
+    "id",
+    "source",
+    "pol",
+    "unit",
+    "source_file",
+    "sha1",
+    "processing"
    ],
-   "items": {
-    "type": "number"
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string"
+    },
+    "pol": {
+     "type": "string"
+    },
+    "unit": {
+     "const": "nm"
+    },
+    "source_file": {
+     "type": "string"
+    },
+    "sha1": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "processing": {
+     "type": "object"
+    }
    }
   },
-  "points": {
-   "type": [
-    "integer",
-    "null"
+  "table": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/common"
+    },
+    {
+     "type": "object",
+     "required": [
+      "kind",
+      "range_nm",
+      "points",
+      "data"
+     ],
+     "properties": {
+      "kind": {
+       "const": "table"
+      },
+      "range_nm": {
+       "type": "array",
+       "minItems": 2,
+       "maxItems": 2,
+       "items": {
+        "type": "number"
+       },
+       "description": "wl_min, wl_max in nm, ascending"
+      },
+      "points": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "data": {
+       "type": "object",
+       "required": [
+        "wl",
+        "n",
+        "k"
+       ],
+       "properties": {
+        "wl": {
+         "type": "array",
+         "items": {
+          "type": "number"
+         }
+        },
+        "n": {
+         "type": "array",
+         "items": {
+          "type": "number"
+         }
+        },
+        "k": {
+         "type": "array",
+         "items": {
+          "type": "number"
+         }
+        }
+       }
+      }
+     }
+    }
    ]
   },
   "model": {
-   "type": "object"
-  },
-  "data": {
-   "type": "object",
-   "required": [
-    "wl",
-    "n",
-    "k"
-   ],
-   "properties": {
-    "wl": {
-     "type": "array",
-     "items": {
-      "type": "number"
-     }
+   "allOf": [
+    {
+     "$ref": "#/$defs/common"
     },
-    "n": {
-     "type": "array",
-     "items": {
-      "type": "number"
-     }
-    },
-    "k": {
-     "type": "array",
-     "items": {
-      "type": "number"
+    {
+     "type": "object",
+     "required": [
+      "kind",
+      "model"
+     ],
+     "properties": {
+      "kind": {
+       "const": "sellmeier"
+      },
+      "model": {
+       "type": "object",
+       "required": [
+        "formula",
+        "terms"
+       ],
+       "properties": {
+        "formula": {
+         "type": "string"
+        },
+        "terms": {
+         "type": "array",
+         "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+           "type": "number"
+          }
+         }
+        }
+       }
+      },
+      "range_nm": {
+       "type": "null"
+      },
+      "points": {
+       "type": "null"
+      }
      }
     }
-   }
+   ]
   }
  }
 }

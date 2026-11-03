@@ -36,6 +36,16 @@ as parallel arrays. A <code>pol</code> field distinguishes the ordinary / extrao
 The <code>fastly.</code> and <code>gcore.</code> hostnames serve byte-identical content
 and are not affected.</p>
 
+<h2>Machine files</h2>
+<table>
+<tr><th>File</th><th>Content</th></tr>
+<tr><td><code>catalog.json</code></td><td>material index with ordered variants</td></tr>
+<tr><td><code>catalog/variants.json</code></td><td>per-variant band, point count, polarisation</td></tr>
+<tr><td><code>catalog/sources.json</code></td><td>licence and citation per source</td></tr>
+<tr><td><code>catalog/ranges.json</code></td><td>envelope band per material</td></tr>
+<tr><td><code>db/_schema.json</code></td><td>JSON Schema (table and Sellmeier branches)</td></tr>
+</table>
+
 <h2>Coverage</h2>
 <p>Over 1400 materials from Palik, SOPRA, Windt, refractiveindex.info, FreeSnell,
 Setfos and the KLA refractive index database. Coverage query:

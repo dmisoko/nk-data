@@ -24,6 +24,33 @@ UNIT_HINT = {"windt": "angstrom", "unight": "nm", "kla": "nm"}
 SENTINEL = -0.0001
 SOURCE_RANK = {"kla": 0, "palik": 1, "sopra": 2, "windt": 3, "rii": 4,
                "setfos": 5, "unight": 6, "coatings": 7, "litho": 8, "various": 9, "freesnell": 10}
+SOURCE_META = {
+    "palik": {"license": "Academic Press, Palik (ed.), Handbook of Optical Constants in Solids",
+              "citation": "E. D. Palik (ed.), Handbook of Optical Constants in Solids I/II, Academic Press, 1985/1991.",
+              "url": "https://www.sciencedirect.com/bookseries/handbook-of-optical-constants-in-solids"},
+    "sopra": {"license": "SOPRA S.A. refractive index database (redistributed for research use)",
+              "citation": "SOPRA S.A., refractive index database, https://www.sopra-sa.com/indices.htm",
+              "url": "https://www.sopra-sa.com/indices.htm"},
+    "windt": {"license": "IMD / D. L. Windt (free for research use)",
+              "citation": "D. L. Windt, IMD - software for modeling soft X-ray multilayers, 1998.",
+              "url": "http://www.rxollc.com/idl/"},
+    "rii": {"license": "refractiveindex.info entries, individual literature sources",
+            "citation": "M. N. Polyanskiy, refractiveindex.info, https://refractiveindex.info",
+            "url": "https://refractiveindex.info"},
+    "freesnell": {"license": "FreeSnell material library (S. G. Johnson)",
+                  "citation": "S. G. Johnson, FreeSnell, https://github.com/stevengj/freesnell",
+                  "url": "https://github.com/stevengj/freesnell"},
+    "kla": {"license": "KLA refractive index database; values attributed to cited literature",
+            "citation": "KLA (formerly Filmetrics) refractive index database, https://www.kla.com/products/instruments/refractive-index-database",
+            "url": "https://www.kla.com/products/instruments/refractive-index-database"},
+    "setfos": {"license": "Fluxim AG Setfos material library (supplied by the repository owner)",
+               "citation": "Fluxim AG, Setfos material library", "url": "https://www.fluxim.com"},
+    "unight": {"license": "Supplier material files (supplied by the repository owner)",
+               "citation": "Supplier nk files", "url": None},
+    "analytic": {"license": "Original repository contributors",
+                 "citation": "Analytical dispersion models distributed with this repository",
+                 "url": None},
+}
 SANITY = {"SiO2": (550.0, 1.46), "Si": (632.8, 3.88), "Ag": (632.8, 0.135),
           "TiO2": (550.0, 2.90), "MgF2": (550.0, 1.38), "Au": (632.8, 0.183)}
 stats = {"files": 0, "records": 0, "skipped": [], "sanity": []}
@@ -125,7 +152,10 @@ def parse_palik(path):
         wl = [wl[i] for i in keep]
         ns = [ns[i] for i in keep]
         ks = [ks[i] for i in keep]
-        out[pol] = (wl, ns, fill_missing_k(ks))
+        filled, n_zero, n_interp = fill_missing_k(ks)
+        proc = {"unit_from": "um", "k_zero_filled": n_zero,
+                "k_interpolated": n_interp, "rows_dropped": len(rows) - len(keep)}
+        out[pol] = (wl, ns, filled, proc)
     return out or None
 
 
@@ -138,6 +168,7 @@ def fill_missing_k(ks):
     """
     out = list(ks)
     n = len(out)
+    n_zero = n_interp = 0
     for i, v in enumerate(ks):
         if not is_sentinel(v):
             continue
@@ -148,9 +179,11 @@ def fill_missing_k(ks):
             ni = next(j for j in range(i + 1, n) if not is_sentinel(ks[j]))
             t = (i - pi) / (ni - pi)
             out[i] = prev + t * (nxt - prev)
+            n_interp += 1
         else:
             out[i] = 0.0
-    return out
+            n_zero += 1
+    return out, n_zero, n_interp
 
 
 def parse_table(rows, ncols, hint):
@@ -158,15 +191,17 @@ def parse_table(rows, ncols, hint):
         # index-only tables: wavelength plus refractive index, no absorption
         unit = resolve_unit([r[0] for r in rows], hint)
         wl = scale_unit([r[0] for r in rows], unit)
-        return {"n": (wl, [r[1] for r in rows], [0.0] * len(rows))}
+        return {"n": (wl, [r[1] for r in rows], [0.0] * len(rows),
+                      {"unit_from": unit, "k_zero_filled": len(rows)})}
     if ncols < 2:
         return None
     unit = resolve_unit([r[0] for r in rows], hint)
     wl = scale_unit([r[0] for r in rows], unit)
+    proc = {"unit_from": unit, "k_zero_filled": 0}
     if ncols == 5:
-        return {"o": (wl, [r[1] for r in rows], [r[2] for r in rows]),
-                "e": (wl, [r[3] for r in rows], [r[4] for r in rows])}
-    return {"n": (wl, [r[1] for r in rows], [r[2] for r in rows])}
+        return {"o": (wl, [r[1] for r in rows], [r[2] for r in rows], proc),
+                "e": (wl, [r[3] for r in rows], [r[4] for r in rows], proc)}
+    return {"n": (wl, [r[1] for r in rows], [r[2] for r in rows], proc)}
 
 
 def kla_identity(rec):
@@ -190,7 +225,9 @@ def series_from_file(path, source):
         wl = [p[0] for p in nx]
         nv = [p[1] for p in nx]
         kv = [p[1] for p in kx] if kx else [0.0] * len(nv)
-        return {"n": (wl, nv, kv)}
+        proc = {"unit_from": "nm", "k_zero_filled": 0 if kx else len(nv),
+                "source": "kla-inline-array"}
+        return {"n": (wl, nv, kv, proc)}
     try:
         _, rows, header = read_rows(path)
     except Exception:  # noqa: BLE001
@@ -203,7 +240,8 @@ def series_from_file(path, source):
         if len(rows[0]) != 4:
             return None
         wl = [EV_TO_UM * 1000.0 / r[0] for r in rows]
-        return {"n": (wl, [r[1] for r in rows], [r[2] for r in rows])}
+        proc = {"unit_from": "eV", "k_zero_filled": 0}
+        return {"n": (wl, [r[1] for r in rows], [r[2] for r in rows], proc)}
     ncols = statistics.mode([len(r) for r in rows])
     rows = [r for r in rows if len(r) == ncols]
     hint = None
@@ -261,6 +299,8 @@ def emit_model(material_id, source, terms, source_file):
         "kind": "sellmeier",
         "range_nm": None,
         "points": None,
+        "sha1": None,
+        "processing": {"unit_from": "um", "model": "sellmeier"},
         "model": {"formula": "n^2 = 1 + sum(A_i * l^2 / (l^2 - B_i)), l in um",
                   "terms": terms},
     }
@@ -270,7 +310,8 @@ def emit_model(material_id, source, terms, source_file):
     return fname
 
 
-def emit(material_id, source, pol, wl, nv, kv, source_file):
+def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None):
+    proc = dict(proc or {})
     order = sorted(range(len(wl)), key=lambda i: wl[i])
     dedup, last = [], None
     for i in order:
@@ -278,12 +319,17 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
         if w != last:
             dedup.append(i)
             last = w
+    proc["wl_duplicates_removed"] = len(wl) - len(dedup)
     order = dedup
     wl_s = [round(wl[i], 5) for i in order]
     # k must be non-negative. Some KLA charts plot -k, so flip sign when the
     # whole series is negative; residual small negatives are measurement noise.
     if kv and sum(1 for v in kv if v < 0) > 0.9 * len(kv):
         kv = [-v for v in kv]
+        proc["k_sign_flipped"] = True
+    clamped = sum(1 for v in kv if v < 0)
+    if clamped:
+        proc["k_negative_clamped"] = clamped
     kv = [max(v, 0.0) for v in kv]
     rec = {
         "id": material_id,
@@ -294,6 +340,8 @@ def emit(material_id, source, pol, wl, nv, kv, source_file):
         "kind": "table",
         "range_nm": [wl_s[0], wl_s[-1]],
         "points": len(wl_s),
+        "sha1": sha1,
+        "processing": proc,
         "data": {"wl": wl_s,
                  "n": [round(nv[i], 6) for i in order],
                  "k": [round(kv[i], 6) for i in order]},
@@ -309,25 +357,78 @@ SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "nk-db series",
     "type": "object",
-    "required": ["id", "source", "pol", "unit", "kind", "range_nm", "points", "data"],
-    "properties": {
-        "id": {"type": "string"},
-        "source": {"type": "string"},
-        "pol": {"type": "string"},
-        "source_file": {"type": "string"},
-        "unit": {"const": "nm"},
-        "kind": {"enum": ["table", "sellmeier"]},
-        "range_nm": {"type": ["array", "null"], "items": {"type": "number"}},
-        "points": {"type": ["integer", "null"]},
-        "model": {"type": "object"},
-        "data": {
+    "oneOf": [
+        {"$ref": "#/$defs/table"},
+        {"$ref": "#/$defs/model"},
+    ],
+    "$defs": {
+        "common": {
             "type": "object",
-            "required": ["wl", "n", "k"],
+            "required": ["id", "source", "pol", "unit", "source_file", "sha1", "processing"],
             "properties": {
-                "wl": {"type": "array", "items": {"type": "number"}},
-                "n": {"type": "array", "items": {"type": "number"}},
-                "k": {"type": "array", "items": {"type": "number"}},
+                "id": {"type": "string"},
+                "source": {"type": "string"},
+                "pol": {"type": "string"},
+                "unit": {"const": "nm"},
+                "source_file": {"type": "string"},
+                "sha1": {"type": ["string", "null"]},
+                "processing": {"type": "object"},
             },
+        },
+        "table": {
+            "allOf": [
+                {"$ref": "#/$defs/common"},
+                {
+                    "type": "object",
+                    "required": ["kind", "range_nm", "points", "data"],
+                    "properties": {
+                        "kind": {"const": "table"},
+                        "range_nm": {
+                            "type": "array", "minItems": 2, "maxItems": 2,
+                            "items": {"type": "number"},
+                            "description": "wl_min, wl_max in nm, ascending",
+                        },
+                        "points": {"type": "integer", "minimum": 1},
+                        "data": {
+                            "type": "object",
+                            "required": ["wl", "n", "k"],
+                            "properties": {
+                                "wl": {"type": "array", "items": {"type": "number"}},
+                                "n": {"type": "array", "items": {"type": "number"}},
+                                "k": {"type": "array", "items": {"type": "number"}},
+                            },
+                        },
+                    },
+                },
+            ],
+        },
+        "model": {
+            "allOf": [
+                {"$ref": "#/$defs/common"},
+                {
+                    "type": "object",
+                    "required": ["kind", "model"],
+                    "properties": {
+                        "kind": {"const": "sellmeier"},
+                        "model": {
+                            "type": "object",
+                            "required": ["formula", "terms"],
+                            "properties": {
+                                "formula": {"type": "string"},
+                                "terms": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "array", "minItems": 2, "maxItems": 2,
+                                        "items": {"type": "number"},
+                                    },
+                                },
+                            },
+                        },
+                        "range_nm": {"type": "null"},
+                        "points": {"type": "null"},
+                    },
+                },
+            ],
         },
     },
 }
@@ -337,6 +438,7 @@ def main():
     OUT_DB.mkdir(exist_ok=True)
     OUT_CAT.mkdir(exist_ok=True)
     catalog = {}
+    variants = {}
     sanity_seen = {}
     seen_kla = set()
 
@@ -356,16 +458,19 @@ def main():
             if key in seen_kla:
                 return
             seen_kla.add(key)
-        for pol, (wl, nv, kv) in series.items():
+        sha1 = __import__("hashlib").sha1(path.read_bytes()).hexdigest()
+        for pol, (wl, nv, kv, proc) in series.items():
             if not wl:
                 continue
-            fname, rec = emit(mid, source, pol, wl, nv, kv, rel)
+            fname, rec = emit(mid, source, pol, wl, nv, kv, rel, proc, sha1)
             entry = catalog.setdefault(mid.lower(), {"id": mid, "v": []})
             if alias:
                 merged = {a for a in alias if a and a.lower() != mid.lower()}
                 merged |= set(entry.get("a", []))
                 entry["a"] = sorted(merged)
             entry["v"].append([source if pol == "n" else f"{source}:{pol}", f"db/{fname}"])
+            variants[f"db/{fname}"] = [source, rec["range_nm"][0], rec["range_nm"][1],
+                                       rec["points"], pol]
             if mid in SANITY and pol == "n":
                 x, ref = SANITY[mid]
                 got = interp(rec["data"]["wl"], rec["data"]["n"], x)
@@ -398,6 +503,22 @@ def main():
         entry["f"] = stem if re.match(r"^[A-Z][a-z]?(?:\d+)?(?:[A-Z][a-z]?\d*)+$", stem) else None
         entry["v"].sort(key=lambda x: (SOURCE_RANK.get(x[0].split(":")[0], 99), x[0], x[1]))
 
+    FORMULA_RE = re.compile(r"^[A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)+$")
+    ELEM_RE = re.compile(r"[A-Z][a-z]?")
+    keys = set(catalog)
+    for slug, entry in catalog.items():
+        while_list = []
+        base = entry.get("f")
+        base_elems = {m.group(0) for m in ELEM_RE.finditer(base)} if base and FORMULA_RE.match(base) else None
+        for a in entry.get("a", []):
+            if a.lower() in keys and a.lower() != slug:
+                continue  # would shadow a different material
+            if base_elems and FORMULA_RE.match(a):
+                if {m.group(0) for m in ELEM_RE.finditer(a)} != base_elems:
+                    continue  # different chemistry, e.g. SiON is not Si3N4
+            while_list.append(a)
+        entry["a"] = sorted(set(while_list))
+
     for mid, rows in sanity_seen.items():
         best = max(rows, key=lambda r: 1 if abs(r[1] - r[2]) < 0.1 * r[2] else 0)
         if abs(best[1] - best[2]) > 0.1 * best[2]:
@@ -417,6 +538,14 @@ def main():
             ranges[slug] = [min(v[0] for v in vals), max(v[1] for v in vals)]
     (OUT_CAT / "ranges.json").write_text(
         json.dumps({"unit": "nm", "materials": ranges}, separators=(",", ":")), encoding="utf-8")
+
+    (OUT_CAT / "sources.json").write_text(
+        json.dumps({"schema": "nk-sources/1", "sources": SOURCE_META}, separators=(",", ":")),
+        encoding="utf-8")
+    (OUT_CAT / "variants.json").write_text(
+        json.dumps({"schema": "nk-variants/1", "unit": "nm",
+                    "fields": ["source", "wl_min", "wl_max", "points", "pol"],
+                    "variants": variants}, separators=(",", ":")), encoding="utf-8")
 
     report = {"files_scanned": stats["files"], "records_written": stats["records"],
               "materials": len(catalog), "skipped": stats["skipped"],

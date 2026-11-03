@@ -12,9 +12,14 @@ errors = []
 
 def check_series(path: Path):
     d = json.loads(path.read_text(encoding="utf-8"))
-    keys = ("id", "source", "pol", "unit", "kind", "range_nm")
-    if d.get("kind") != "sellmeier":
-        keys = keys + ("data",)
+    keys = ("id", "source", "pol", "unit", "kind")
+    if d.get("kind") == "table":
+        keys = keys + ("range_nm", "data", "points", "sha1", "processing")
+    elif d.get("kind") == "sellmeier":
+        keys = keys + ("model",)
+    else:
+        errors.append(f"{path.name}: unknown kind {d.get('kind')}")
+        return
     for key in keys:
         if key not in d:
             errors.append(f"{path.name}: missing {key}")
@@ -27,6 +32,8 @@ def check_series(path: Path):
         if not d.get("model", {}).get("terms"):
             errors.append(f"{path.name}: empty model")
         return
+    if not isinstance(d.get("sha1"), str) or len(d["sha1"]) != 40:
+        errors.append(f"{path.name}: bad sha1")
     wl, n, k = d["data"]["wl"], d["data"]["n"], d["data"]["k"]
     if not (len(wl) == len(n) == len(k)):
         errors.append(f"{path.name}: length mismatch")
