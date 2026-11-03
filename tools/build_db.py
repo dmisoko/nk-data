@@ -500,19 +500,20 @@ def main():
 
     for slug, entry in catalog.items():
         stem = entry["id"]
-        entry["f"] = stem if re.match(r"^[A-Z][a-z]?(?:\d+)?(?:[A-Z][a-z]?\d*)+$", stem) else None
+        entry["f"] = stem if re.match(r"^[A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)*$", stem) else None
         entry["v"].sort(key=lambda x: (SOURCE_RANK.get(x[0].split(":")[0], 99), x[0], x[1]))
 
-    FORMULA_RE = re.compile(r"^[A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)+$")
+    FORMULA_RE = re.compile(r"^[A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)*$")
     ELEM_RE = re.compile(r"[A-Z][a-z]?")
     keys = set(catalog)
     for slug, entry in catalog.items():
         while_list = []
         base = entry.get("f")
         base_elems = {m.group(0) for m in ELEM_RE.finditer(base)} if base and FORMULA_RE.match(base) else None
+        others = {m["id"] for k2, m in catalog.items() if k2 != slug}
         for a in entry.get("a", []):
-            if a.lower() in keys and a.lower() != slug:
-                continue  # would shadow a different material
+            if a in others:
+                continue  # exactly shadows a different material
             if base_elems and FORMULA_RE.match(a):
                 if {m.group(0) for m in ELEM_RE.finditer(a)} != base_elems:
                     continue  # different chemistry, e.g. SiON is not Si3N4
