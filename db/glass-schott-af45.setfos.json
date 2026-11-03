@@ -1,0 +1,1 @@
+{"id":"Glass_Schott_AF45","source":"setfos","pol":"n","source_file":"setfos/Glass_Schott_AF45","unit":"nm","kind":"table","range_nm":[400.0,2000.0],"points":2,"data":{"wl":[400.0,2000.0],"n":[1.5254,1.5254],"k":[0.0,0.0]}}

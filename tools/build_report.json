@@ -1,7 +1,7 @@
 {
  "files_scanned": 1761,
- "records_written": 1764,
- "materials": 1415,
+ "records_written": 1770,
+ "materials": 1421,
  "skipped": [
   [
    "palik/Al2O3-B.nk",
@@ -90,33 +90,9 @@
   [
    "analytic/n_vacuum.m",
    "no_sellmeier"
-  ],
-  [
-   "setfos/2TNATA_interpolated",
-   "no_series"
-  ],
-  [
-   "setfos/Glass_Schott_AF45",
-   "no_series"
-  ],
-  [
-   "setfos/PBD_interpolated",
-   "no_series"
-  ],
-  [
-   "setfos/TPD_interpolated",
-   "no_series"
-  ],
-  [
-   "setfos/TPT1_interpolated",
-   "no_series"
-  ],
-  [
-   "setfos/alfa-NPD_interpolated",
-   "no_series"
   ]
  ],
  "sanity_failures": [],
- "db_bytes": 13275806,
- "catalog_bytes": 130330
+ "db_bytes": 13280737,
+ "catalog_bytes": 130990
 }

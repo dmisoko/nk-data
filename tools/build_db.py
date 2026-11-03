@@ -154,7 +154,12 @@ def fill_missing_k(ks):
 
 
 def parse_table(rows, ncols, hint):
-    if ncols < 3:
+    if ncols == 2:
+        # index-only tables: wavelength plus refractive index, no absorption
+        unit = resolve_unit([r[0] for r in rows], hint)
+        wl = scale_unit([r[0] for r in rows], unit)
+        return {"n": (wl, [r[1] for r in rows], [0.0] * len(rows))}
+    if ncols < 2:
         return None
     unit = resolve_unit([r[0] for r in rows], hint)
     wl = scale_unit([r[0] for r in rows], unit)
