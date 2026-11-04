@@ -128,10 +128,12 @@ https://dmisoko.github.io/nk/catalog.json
 https://dmisoko.github.io/nk/db/sio2.sopra.json
 ```
 
-Pin a commit, not a branch: CDN edges cache `@master` independently and can serve
-older bytes. Use `@<commit-sha>` (or a release tag) for every request in a batch,
-compare `catalog/manifest.json` hashes before and after, and never mix variants
-read from one revision with `db/` files from another.
+Pin a commit, not a branch. GitHub Pages always serves the current revision;
+the jsDelivr mirrors should be addressed as `@<commit-sha>`. A branch ref such as
+`@master` is a moving pointer that each CDN edge caches for roughly 12 hours, so
+it can return older bytes. Compare `catalog/manifest.json` hashes before and
+after a batch and never mix variants from one revision with `db/` files from
+another.
 
 See `NOTICE.md` for data provenance and `PROCESSING.md` for the normalisations
 applied to the numbers.

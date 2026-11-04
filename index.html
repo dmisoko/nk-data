@@ -28,8 +28,8 @@ as parallel arrays. A <code>pol</code> field distinguishes the ordinary / extrao
 <table>
 <tr><th>Channel</th><th>Base URL</th></tr>
 <tr><td>GitHub Pages</td><td><code>https://dmisoko.github.io/nk/</code></td></tr>
-<tr><td>jsDelivr mirror</td><td><code>https://fastly.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
-<tr><td>jsDelivr (alt edge)</td><td><code>https://gcore.jsdelivr.net/gh/dmisoko/nk@main/</code></td></tr>
+<tr><td>jsDelivr mirror (pinned)</td><td><code>https://fastly.jsdelivr.net/gh/dmisoko/nk@&lt;commit&gt;/</code></td></tr>
+<tr><td>jsDelivr alt edge (pinned)</td><td><code>https://gcore.jsdelivr.net/gh/dmisoko/nk@&lt;commit&gt;/</code></td></tr>
 </table>
 
 <p>Some networks reset TLS connections whose SNI is <code>cdn.jsdelivr.net</code>.
@@ -53,9 +53,10 @@ and are not affected.</p>
 Setfos and the KLA refractive index database. Coverage query:
 <code>catalog/ranges.json</code>.</p>
 
-<p>Pin a commit, not a branch: CDN edges cache <code>@master</code> independently and can
-serve older bytes. Request one commit SHA for a whole batch and check
-<code>catalog/manifest.json</code> before trusting the payload.</p>
+<p>Branch refs such as <code>@master</code> are moving pointers cached per CDN edge
+(about 12 hours) and will happily serve older bytes. Use the Pages base for the
+current revision, or substitute one commit SHA on every request in a batch and
+check <code>catalog/manifest.json</code> before trusting the payload.</p>
 
 <p>Provenance and licensing: <a href="NOTICE.md">NOTICE.md</a>.
 Normalisations: <a href="PROCESSING.md">PROCESSING.md</a>.</p>
