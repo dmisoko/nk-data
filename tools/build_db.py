@@ -8,6 +8,7 @@ one polarisation).
 import json
 import re
 import statistics
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -20,6 +21,7 @@ EXTRA_SOURCES = [
 OUT_DB = ROOT / "db"
 OUT_CAT = ROOT / "catalog"
 EV_TO_UM = 1.239841984
+NOW = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 UNIT_HINT = {"windt": "angstrom", "unight": "nm", "kla": "nm"}
 SENTINEL = -0.0001
 SOURCE_RANK = {"kla": 0, "palik": 1, "sopra": 2, "windt": 3, "rii": 4,
@@ -121,6 +123,19 @@ def parse_palik(path):
     width = statistics.mode([len(r) for r in rows])
     rows = [r for r in rows if len(r) == width]
     um_idx = next((i for i, l in enumerate(labels) if "um" in l.lower()), 2)
+    ev_idx = next((i for i, l in enumerate(labels) if l.lower().startswith("energy")), None)
+    cm_idx = next((i for i, l in enumerate(labels) if "cm" in l.lower()), None)
+
+    def wavelength_um(row):
+        """Palik leaves the micrometre column as -0.0001 when only eV/cm-1 are known."""
+        um = row[um_idx]
+        if um > 0:
+            return um, "um"
+        if ev_idx is not None and row[ev_idx] > 0:
+            return EV_TO_UM / row[ev_idx], "eV"
+        if cm_idx is not None and row[cm_idx] > 0:
+            return 1e4 / row[cm_idx], "cm-1"
+        return None, None
     groups, order = {}, []
     for i, lab in enumerate(labels):
         low = lab.lower()
@@ -139,11 +154,18 @@ def parse_palik(path):
         if not pairs:
             continue
         wl, ns, ks = [], [], []
+        recovered = dropped = 0
         for r in rows:
             pick = next(((ni, ki) for ni, ki in pairs if not is_sentinel(r[ni])), pairs[0])
             ni, ki = pick
             kv = r[ki] if ki is not None else SENTINEL
-            wl.append(r[um_idx] * 1000.0)
+            um, how = wavelength_um(r)
+            if um is None:
+                dropped += 1
+                continue
+            if how != "um":
+                recovered += 1
+            wl.append(um * 1000.0)
             ns.append(r[ni])
             ks.append(kv)
         keep = [i for i, v in enumerate(ns) if not is_sentinel(v)]
@@ -152,14 +174,17 @@ def parse_palik(path):
         wl = [wl[i] for i in keep]
         ns = [ns[i] for i in keep]
         ks = [ks[i] for i in keep]
-        filled, n_zero, n_interp = fill_missing_k(ks)
+        filled, n_zero, n_interp = fill_missing_k(ks, wl)
         proc = {"unit_from": "um", "k_zero_filled": n_zero,
-                "k_interpolated": n_interp, "rows_dropped": len(rows) - len(keep)}
+                "k_interpolated": n_interp,
+                "wl_from_energy_column": recovered,
+                "rows_dropped_no_wavelength": dropped,
+                "rows_dropped": len(rows) - len(keep)}
         out[pol] = (wl, ns, filled, proc)
     return out or None
 
 
-def fill_missing_k(ks):
+def fill_missing_k(ks, wl=None):
     """-0.0001 marks "no k value" in Palik tables.
 
     Between two absorbing neighbours (k > 0.05) the gap is interpolated; next to
@@ -177,7 +202,10 @@ def fill_missing_k(ks):
         if prev is not None and nxt is not None and prev > 0.05 and nxt > 0.05:
             pi = next(j for j in range(i - 1, -1, -1) if not is_sentinel(ks[j]))
             ni = next(j for j in range(i + 1, n) if not is_sentinel(ks[j]))
-            t = (i - pi) / (ni - pi)
+            if wl is not None and wl[ni] != wl[pi]:
+                t = (wl[i] - wl[pi]) / (wl[ni] - wl[pi])
+            else:
+                t = (i - pi) / (ni - pi)
             out[i] = prev + t * (nxt - prev)
             n_interp += 1
         else:
@@ -273,6 +301,11 @@ def parse_analytic(path):
     return terms or None
 
 
+def sig(value, digits):
+    """Round to significant digits so that tiny wavelengths (X-ray range) survive."""
+    return float(f"{value:.{digits}g}")
+
+
 def slugify(text):
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "material"
 
@@ -315,13 +348,13 @@ def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None
     order = sorted(range(len(wl)), key=lambda i: wl[i])
     dedup, last = [], None
     for i in order:
-        w = round(wl[i], 5)
+        w = sig(wl[i], 9)
         if w != last:
             dedup.append(i)
             last = w
     proc["wl_duplicates_removed"] = len(wl) - len(dedup)
     order = dedup
-    wl_s = [round(wl[i], 5) for i in order]
+    wl_s = [sig(wl[i], 9) for i in order]
     # k must be non-negative. Some KLA charts plot -k, so flip sign when the
     # whole series is negative; residual small negatives are measurement noise.
     if kv and sum(1 for v in kv if v < 0) > 0.9 * len(kv):
@@ -343,8 +376,8 @@ def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None
         "sha1": sha1,
         "processing": proc,
         "data": {"wl": wl_s,
-                 "n": [round(nv[i], 6) for i in order],
-                 "k": [round(kv[i], 6) for i in order]},
+                 "n": [sig(nv[i], 7) for i in order],
+                 "k": [sig(kv[i], 7) for i in order]},
     }
     suffix = "" if pol == "n" else f".{pol}"
     fname = unique_name(f"{slugify(material_id)}.{source}{suffix}.json")
@@ -528,7 +561,7 @@ def main():
     (OUT_DB / "_schema.json").write_text(json.dumps(SCHEMA, indent=1), encoding="utf-8")
 
     (ROOT / "catalog.json").write_text(
-        json.dumps({"schema": "nk-catalog/1", "generated": "2026-11-02", "materials": catalog},
+        json.dumps({"schema": "nk-catalog/1", "generated": NOW, "materials": catalog},
                    separators=(",", ":")), encoding="utf-8")
 
     ranges = {}
@@ -547,6 +580,38 @@ def main():
         json.dumps({"schema": "nk-variants/1", "unit": "nm",
                     "fields": ["source", "wl_min", "wl_max", "points", "pol"],
                     "variants": variants}, separators=(",", ":")), encoding="utf-8")
+
+    import hashlib
+    def sha256_file(rel):
+        return hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
+
+    ambiguous = {}
+    for slug, entry in catalog.items():
+        names = [entry["id"]] + ([entry["f"]] if entry.get("f") else []) + entry.get("a", [])
+        for name in names:
+            ambiguous.setdefault(name.lower(), set()).add(slug)
+    groups = [sorted(v) for v in ambiguous.values() if len(v) > 1]
+    (ROOT / "catalog" / "ambiguous.json").write_text(
+        json.dumps({"schema": "nk-ambiguous/1",
+                    "note": "Names that collide after case folding. Fetch both candidates "
+                            "and choose from formula or context; never auto-resolve.",
+                    "groups": sorted(groups)}, separators=(",", ":")), encoding="utf-8")
+
+    manifest = {
+        "schema": "nk-manifest/1",
+        "generated": NOW,
+        "materials": len(catalog),
+        "variants": len(variants),
+        "sha256": {
+            "catalog.json": sha256_file("catalog.json"),
+            "catalog/ranges.json": sha256_file("catalog/ranges.json"),
+            "catalog/variants.json": sha256_file("catalog/variants.json"),
+            "catalog/sources.json": sha256_file("catalog/sources.json"),
+            "catalog/ambiguous.json": sha256_file("catalog/ambiguous.json"),
+        },
+    }
+    (ROOT / "catalog" / "manifest.json").write_text(
+        json.dumps(manifest, indent=1), encoding="utf-8")
 
     report = {"files_scanned": stats["files"], "records_written": stats["records"],
               "materials": len(catalog), "skipped": stats["skipped"],

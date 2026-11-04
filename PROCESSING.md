@@ -17,16 +17,28 @@ All wavelengths are converted to nanometres and sorted ascending.
 | `setfos/`, `unight/`, `sources/kla/` | nanometre | none |
 | `analytic/*.m` | micrometre (model input) | model keeps micrometre |
 
+The unit is fixed per source except where the source itself is ambiguous: for
+sources without a declared unit, a value range of `>= 100` or a maximum above
+`2000` is read as nanometres and everything else as micrometres. Every emitted
+record states what was assumed in `processing.unit_from`.
+
 Duplicate wavelengths inside one source file are collapsed to the first
 occurrence; the number removed is reported as `processing.wl_duplicates_removed`.
+Rounding keeps nine significant digits for wavelength and seven for `n`/`k`, so
+X-ray values such as `8.26561e-08 nm` are not truncated to zero.
 
 ## Missing extinction coefficient
 
 Palik tables use `-0.0001` to mean "no value at this row".
 
 - Rows whose refractive index is `-0.0001` are dropped: no data exists there.
+- Palik tables sometimes leave the micrometre column as `-0.0001` while the
+  eV and cm-1 columns are populated. The wavelength is then recovered as
+  `1239.841984 / E[eV]`, or `1e4 / nu[cm-1]`, and counted in
+  `processing.wl_from_energy_column`. Rows with no recoverable wavelength are
+  dropped and counted in `processing.rows_dropped_no_wavelength`.
 - A missing `k` between two absorbing neighbours (both `> 0.05`) is linearly
-  interpolated in wavelength: `processing.k_interpolated`.
+  interpolated **in wavelength**, not by array position: `processing.k_interpolated`.
 - A missing `k` elsewhere is set to `0.0`, which is what the sentinel means for
   transparent dielectrics: `processing.k_zero_filled`.
 - Index-only tables (two columns, or `k` absent) are stored with `k = 0.0`.

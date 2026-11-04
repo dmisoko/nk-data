@@ -1,0 +1,1 @@
+{"schema":"nk-ambiguous/1","note":"Names that collide after case folding. Fetch both candidates and choose from formula or context; never auto-resolve.","groups":[["sn","tin"]]}

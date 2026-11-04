@@ -43,6 +43,8 @@ and are not affected.</p>
 <tr><td><code>catalog/variants.json</code></td><td>per-variant band, point count, polarisation</td></tr>
 <tr><td><code>catalog/sources.json</code></td><td>licence and citation per source</td></tr>
 <tr><td><code>catalog/ranges.json</code></td><td>envelope band per material</td></tr>
+<tr><td><code>catalog/manifest.json</code></td><td>build timestamp, counts and SHA-256 of each catalog file</td></tr>
+<tr><td><code>catalog/ambiguous.json</code></td><td>names that collide after case folding (Sn / TiN)</td></tr>
 <tr><td><code>db/_schema.json</code></td><td>JSON Schema (table and Sellmeier branches)</td></tr>
 </table>
 
@@ -51,6 +53,11 @@ and are not affected.</p>
 Setfos and the KLA refractive index database. Coverage query:
 <code>catalog/ranges.json</code>.</p>
 
-<p>Provenance and licensing: <a href="NOTICE.md">NOTICE.md</a>.</p>
+<p>Pin a commit, not a branch: CDN edges cache <code>@master</code> independently and can
+serve older bytes. Request one commit SHA for a whole batch and check
+<code>catalog/manifest.json</code> before trusting the payload.</p>
+
+<p>Provenance and licensing: <a href="NOTICE.md">NOTICE.md</a>.
+Normalisations: <a href="PROCESSING.md">PROCESSING.md</a>.</p>
 </body>
 </html>

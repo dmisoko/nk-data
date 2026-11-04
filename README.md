@@ -113,8 +113,12 @@ ulfgri@gmail.com
 
 A machine-readable layer is generated from the original files:
 
-- `catalog.json` - search index (names, formulas, variants)
-- `catalog/ranges.json` - wavelength coverage per material
+- `catalog.json` - search index (names, formulas, ranked variants)
+- `catalog/variants.json` - per-variant band, point count and polarisation
+- `catalog/sources.json` - licence and citation per source
+- `catalog/ranges.json` - envelope band per material
+- `catalog/ambiguous.json` - names that collide after case folding
+- `catalog/manifest.json` - build timestamp and SHA-256 of every catalog file
 - `db/*.json` - one file per material and source, wavelengths in nanometres
 
 Fetch any material with two plain HTTPS GET requests, no clone and no token:
@@ -124,5 +128,11 @@ https://dmisoko.github.io/nk/catalog.json
 https://dmisoko.github.io/nk/db/sio2.sopra.json
 ```
 
-See `NOTICE.md` for data provenance.
+Pin a commit, not a branch: CDN edges cache `@master` independently and can serve
+older bytes. Use `@<commit-sha>` (or a release tag) for every request in a batch,
+compare `catalog/manifest.json` hashes before and after, and never mix variants
+read from one revision with `db/` files from another.
+
+See `NOTICE.md` for data provenance and `PROCESSING.md` for the normalisations
+applied to the numbers.
 Regenerate the derived layer with `python3 tools/build_db.py`.

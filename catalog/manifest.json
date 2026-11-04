@@ -1,0 +1,13 @@
+{
+ "schema": "nk-manifest/1",
+ "generated": "2026-11-04T05:14:35Z",
+ "materials": 1421,
+ "variants": 1763,
+ "sha256": {
+  "catalog.json": "008f673cb469f61bac265c864a05754652682aa22d4c0208d0e87d6174e042ef",
+  "catalog/ranges.json": "27818a86320064db64d506a94ea36cfaedfa55dfc10b5b17c0e9a23d59b11b7e",
+  "catalog/variants.json": "5b53ffe16e7778079b4ebc3fdec4b5c35ede0772bfdfde24101ad3ba70708983",
+  "catalog/sources.json": "bdced1ba34fada7a9ef292b97c24e08e4a7af4f6ba4cc26166b36972fbf00838",
+  "catalog/ambiguous.json": "5ba95842b0adc09c8409d410ea58e383f130c6e76691beb0d2658a8b561bb21e"
+ }
+}
