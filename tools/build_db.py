@@ -6,6 +6,7 @@ nanometres; every db file holds exactly one series (one material, one source,
 one polarisation).
 """
 import json
+import math
 import re
 import statistics
 from datetime import datetime, timezone
@@ -181,7 +182,7 @@ def parse_palik(path):
         ns = [ns[i] for i in keep]
         ks = [ks[i] for i in keep]
         filled, n_zero, n_interp = fill_missing_k(ks, wl)
-        proc = {"unit_from": "um", "k_zero_filled": n_zero,
+        proc = {"unit_from": "um", "declared_unit": "um", "k_zero_filled": n_zero,
                 "k_interpolated": n_interp,
                 "wl_from_energy_column": recovered,
                 "rows_dropped_no_wavelength": dropped,
@@ -287,6 +288,18 @@ def series_from_file(path, source):
                 break
     if hint is None:
         hint = UNIT_HINT.get(source)
+    declared = None
+    for h in header:
+        low = h.lower()
+        if "lambda/um" in low or "wavelength (um" in low or "wavelength[um" in low:
+            declared = "um"
+        elif "lambda/nm" in low or "wavelength(nm" in low or "wavelength [nm" in low:
+            declared = "nm"
+    parsed = parse_table(rows, ncols, hint)
+    if parsed and declared:
+        for _, (_, _, _, pr) in parsed.items():
+            pr["declared_unit"] = declared
+    return parsed
     return parse_table(rows, ncols, hint)
 
 
@@ -349,8 +362,30 @@ def emit_model(material_id, source, terms, source_file, sha1=None):
     return fname
 
 
+def is_spike(values, i):
+    """A single point three orders of magnitude away from both neighbours is a typo."""
+    if i == 0 or i >= len(values) - 1:
+        return False
+    a, b, v = values[i - 1], values[i + 1], values[i]
+    if a <= 0 or b <= 0 or v <= 0:
+        return False
+    base = math.sqrt(a * b)
+    return abs(math.log10(v / base)) > 3.0
+
+
 def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None):
     proc = dict(proc or {})
+    # drop rows that cannot be physical (source typos, sentinels that slipped through)
+    keep_rows = [i for i in range(len(wl)) if nv[i] > 0]
+    dropped_nonphysical = len(wl) - len(keep_rows)
+    if dropped_nonphysical:
+        wl = [wl[i] for i in keep_rows]
+        nv = [nv[i] for i in keep_rows]
+        kv = [kv[i] for i in keep_rows]
+        proc["nonphysical_rows_dropped"] = dropped_nonphysical
+    if not wl:
+        return None, None
+
     order = sorted(range(len(wl)), key=lambda i: wl[i])
     dedup, last = [], None
     for i in order:
@@ -370,6 +405,18 @@ def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None
     if clamped:
         proc["k_negative_clamped"] = clamped
     kv = [max(v, 0.0) for v in kv]
+    outlier = any(kv[i] > 1000 or nv[i] > 200 for i in range(min(len(nv), len(kv))))
+    declared = proc.get("declared_unit")
+    resolved = proc.get("unit_from")
+    unit_conflict = bool(declared and resolved and declared != resolved
+                         and not (declared == "eV" or resolved == "eV"))
+    if unit_conflict:
+        proc["unit_conflict"] = True
+    if outlier:
+        proc["extreme_value_rows"] = sum(1 for i in range(min(len(nv), len(kv)))
+                                         if kv[i] > 1000 or nv[i] > 200)
+    quality = ("ok" if not dropped_nonphysical and not unit_conflict and not outlier
+               else "suspect")
     rec = {
         "id": material_id,
         "source": source,
@@ -380,6 +427,10 @@ def emit(material_id, source, pol, wl, nv, kv, source_file, proc=None, sha1=None
         "range_nm": [wl_s[0], wl_s[-1]],
         "points": len(wl_s),
         "sha1": sha1,
+        "quality": {"status": quality,
+                    "rows_dropped": dropped_nonphysical,
+                    "unit_conflict": unit_conflict,
+                    "extreme_values": outlier},
         "processing": proc,
         "data": {"wl": wl_s,
                  "n": [sig(nv[i], 7) for i in order],
@@ -428,6 +479,16 @@ SCHEMA = {
                             "description": "wl_min, wl_max in nm, ascending",
                         },
                         "points": {"type": "integer", "minimum": 1},
+                        "quality": {
+                            "type": "object",
+                            "required": ["status", "rows_dropped", "unit_conflict", "extreme_values"],
+                            "properties": {
+                                "status": {"enum": ["ok", "suspect"]},
+                                "rows_dropped": {"type": "integer", "minimum": 0},
+                                "unit_conflict": {"type": "boolean"},
+                                "extreme_values": {"type": "boolean"},
+                            },
+                        },
                         "data": {
                             "type": "object",
                             "required": ["wl", "n", "k"],
@@ -502,6 +563,9 @@ def main():
             if not wl:
                 continue
             fname, rec = emit(mid, source, pol, wl, nv, kv, rel, proc, sha1)
+            if rec is None:
+                stats["skipped"].append([rel, "no_valid_rows"])
+                continue
             entry = catalog.setdefault(mid.lower(), {"id": mid, "v": []})
             if alias:
                 merged = {a for a in alias if a and a.lower() != mid.lower()}

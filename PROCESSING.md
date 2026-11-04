@@ -61,6 +61,23 @@ carries the label used by the source (`n` isotropic, `o` ordinary, `e`
 extraordinary, or a source-specific label such as `h`). The catalog lists these
 as `<source>:<pol>`.
 
+## Quality flags
+
+Rows with a non-positive refractive index are dropped (a source typo such as
+`n = -256`); the count lands in `quality.rows_dropped`. A series is marked
+`quality.status = "suspect"` when:
+
+- any row was dropped (`rows_dropped > 0`),
+- the unit declared in the source header disagrees with the unit inferred from
+  the values (`unit_conflict`), or
+- values above the plausible ceiling remain (`n > 200` or `k > 1000`,
+  `extreme_values`).
+
+Suspect series are still published so nothing disappears silently, but clients
+must not load them without showing the reason. A series whose every row has a
+non-positive refractive index is not published at all; such files are counted as
+`no_valid_rows` in `tools/build_report.json`.
+
 ## Not applied
 
 - No smoothing, averaging, fitting or noise removal.

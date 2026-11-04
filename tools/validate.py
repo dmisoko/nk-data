@@ -14,7 +14,7 @@ def check_series(path: Path):
     d = json.loads(path.read_text(encoding="utf-8"))
     keys = ("id", "source", "pol", "unit", "kind")
     if d.get("kind") == "table":
-        keys = keys + ("range_nm", "data", "points", "sha1", "processing")
+        keys = keys + ("range_nm", "data", "points", "sha1", "processing", "quality")
     elif d.get("kind") == "sellmeier":
         keys = keys + ("model",)
     else:
@@ -34,6 +34,9 @@ def check_series(path: Path):
         return
     if not isinstance(d.get("sha1"), str) or len(d["sha1"]) != 40:
         errors.append(f"{path.name}: bad sha1")
+    q = d.get("quality") or {}
+    if q.get("status") not in ("ok", "suspect"):
+        errors.append(f"{path.name}: bad quality status")
     wl, n, k = d["data"]["wl"], d["data"]["n"], d["data"]["k"]
     if not (len(wl) == len(n) == len(k)):
         errors.append(f"{path.name}: length mismatch")

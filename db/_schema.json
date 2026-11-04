@@ -79,6 +79,33 @@
        "type": "integer",
        "minimum": 1
       },
+      "quality": {
+       "type": "object",
+       "required": [
+        "status",
+        "rows_dropped",
+        "unit_conflict",
+        "extreme_values"
+       ],
+       "properties": {
+        "status": {
+         "enum": [
+          "ok",
+          "suspect"
+         ]
+        },
+        "rows_dropped": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "unit_conflict": {
+         "type": "boolean"
+        },
+        "extreme_values": {
+         "type": "boolean"
+        }
+       }
+      },
       "data": {
        "type": "object",
        "required": [
