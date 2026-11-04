@@ -470,7 +470,7 @@ SCHEMA = {
                 {"$ref": "#/$defs/common"},
                 {
                     "type": "object",
-                    "required": ["kind", "range_nm", "points", "data"],
+                    "required": ["kind", "range_nm", "points", "quality", "data"],
                     "properties": {
                         "kind": {"const": "table"},
                         "range_nm": {
@@ -573,7 +573,7 @@ def main():
                 entry["a"] = sorted(merged)
             entry["v"].append([source if pol == "n" else f"{source}:{pol}", f"db/{fname}"])
             variants[f"db/{fname}"] = [source, rec["range_nm"][0], rec["range_nm"][1],
-                                       rec["points"], pol]
+                                       rec["points"], pol, rec["quality"]["status"]]
             if mid in SANITY and pol == "n":
                 x, ref = SANITY[mid]
                 got = interp(rec["data"]["wl"], rec["data"]["n"], x)
@@ -649,7 +649,7 @@ def main():
         encoding="utf-8")
     (OUT_CAT / "variants.json").write_text(
         json.dumps({"schema": "nk-variants/1", "unit": "nm",
-                    "fields": ["source", "wl_min", "wl_max", "points", "pol"],
+                    "fields": ["source", "wl_min", "wl_max", "points", "pol", "quality"],
                     "variants": variants}, separators=(",", ":")), encoding="utf-8")
 
     import hashlib

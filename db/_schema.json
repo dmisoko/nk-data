@@ -60,6 +60,7 @@
       "kind",
       "range_nm",
       "points",
+      "quality",
       "data"
      ],
      "properties": {

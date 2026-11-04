@@ -114,7 +114,7 @@ ulfgri@gmail.com
 A machine-readable layer is generated from the original files:
 
 - `catalog.json` - search index (names, formulas, ranked variants)
-- `catalog/variants.json` - per-variant band, point count and polarisation
+- `catalog/variants.json` - per-variant band, point count, polarisation and quality
 - `catalog/sources.json` - licence and citation per source
 - `catalog/ranges.json` - envelope band per material
 - `catalog/ambiguous.json` - names that collide after case folding

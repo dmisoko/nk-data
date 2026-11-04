@@ -5,6 +5,11 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import jsonschema
+except ImportError:  # pragma: no cover
+    jsonschema = None
+
 ROOT = Path(__file__).resolve().parent.parent
 POLS = {"n", "o", "e"}  # any short label is accepted
 errors = []
@@ -66,9 +71,23 @@ def main():
             if key in seen:
                 errors.append(f"duplicate series {key}")
             seen.add(key)
+    validator = None
+    if jsonschema is not None:
+        schema = json.loads((ROOT / "db" / "_schema.json").read_text(encoding="utf-8"))
+        validator = jsonschema.Draft202012Validator(schema)
+    checked = 0
     for p in sorted((ROOT / "db").glob("*.json")):
-        if p.name != "_schema.json":
-            check_series(p)
+        if p.name == "_schema.json":
+            continue
+        check_series(p)
+        if validator is not None:
+            payload = json.loads(p.read_text(encoding="utf-8"))
+            try:
+                validator.validate(payload)
+            except jsonschema.ValidationError as exc:
+                errors.append(f"{p.name}: schema {exc.message[:80]}")
+        checked += 1
+    print(f"schema validation: {'on' if validator else 'skipped'} ({checked} files)")
     print(f"catalog materials: {len(mats)}")
     print(f"db files: {len(list((ROOT / 'db').glob('*.json'))) - 1}")
     print(f"errors: {len(errors)}")

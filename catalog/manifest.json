@@ -1,12 +1,12 @@
 {
  "schema": "nk-manifest/1",
- "generated": "2026-11-04T06:37:28Z",
+ "generated": "2026-11-04T09:30:36Z",
  "materials": 1380,
  "variants": 1717,
  "sha256": {
-  "catalog.json": "f6e51f121e63c5e36c833651479a5e2a7c35cb1f62d3d3f247f18dba9af758c5",
+  "catalog.json": "42d8d4b48cc8d6425974fd6effb9f68e078775d4143b79bf51c1408102d6886b",
   "catalog/ranges.json": "aa9b8e0065d9e151c0300fdce71dd7d6c987aa92fd0f54803aded3d2c850cf63",
-  "catalog/variants.json": "5aa3bbf7851696387e450b436c090a192d1944d64fb3b9187f5a27929934e59d",
+  "catalog/variants.json": "f1e80ab71efe6e88ed77c6d9e8de0e6b9e7b9919c49edf4d3fade8d430938adb",
   "catalog/sources.json": "a2aedfee25427344494b7eb19bfb9e7f640e9cc216ac06c70fae5231e40983a0",
   "catalog/ambiguous.json": "5ba95842b0adc09c8409d410ea58e383f130c6e76691beb0d2658a8b561bb21e"
  }
