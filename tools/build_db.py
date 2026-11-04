@@ -49,6 +49,12 @@ SOURCE_META = {
                "citation": "Fluxim AG, Setfos material library", "url": "https://www.fluxim.com"},
     "unight": {"license": "Supplier material files (supplied by the repository owner)",
                "citation": "Supplier nk files", "url": None},
+    "coatings": {"license": "Original repository contributors (measured coating data)",
+                 "citation": "Coating deposition data distributed with this repository", "url": None},
+    "litho": {"license": "Original repository contributors (lithography materials)",
+              "citation": "Lithography material data distributed with this repository", "url": None},
+    "various": {"license": "Original repository contributors",
+                "citation": "Miscellaneous material data distributed with this repository", "url": None},
     "analytic": {"license": "Original repository contributors",
                  "citation": "Analytical dispersion models distributed with this repository",
                  "url": None},
@@ -322,7 +328,7 @@ def unique_name(name):
     return candidate
 
 
-def emit_model(material_id, source, terms, source_file):
+def emit_model(material_id, source, terms, source_file, sha1=None):
     rec = {
         "id": material_id,
         "source": source,
@@ -332,7 +338,7 @@ def emit_model(material_id, source, terms, source_file):
         "kind": "sellmeier",
         "range_nm": None,
         "points": None,
-        "sha1": None,
+        "sha1": sha1,
         "processing": {"unit_from": "um", "model": "sellmeier"},
         "model": {"formula": "n^2 = 1 + sum(A_i * l^2 / (l^2 - B_i)), l in um",
                   "terms": terms},
@@ -520,7 +526,8 @@ def main():
             stats["skipped"].append([str(p.relative_to(ROOT)), "no_sellmeier"])
             continue
         mid = p.stem[2:]
-        fname = emit_model(mid, "analytic", terms, str(p.relative_to(ROOT)))
+        fname = emit_model(mid, "analytic", terms, str(p.relative_to(ROOT)),
+                           __import__("hashlib").sha1(p.read_bytes()).hexdigest())
         entry = catalog.setdefault(mid.lower(), {"id": mid, "v": [], "a": []})
         entry["v"].append(["analytic", f"db/{fname}"])
 
