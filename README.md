@@ -124,8 +124,8 @@ A machine-readable layer is generated from the original files:
 Fetch any material with two plain HTTPS GET requests, no clone and no token:
 
 ```
-https://dmisoko.github.io/nk/catalog.json
-https://dmisoko.github.io/nk/db/sio2.sopra.json
+https://dmisoko.github.io/nk-data/catalog.json
+https://dmisoko.github.io/nk-data/db/sio2.sopra.json
 ```
 
 Pin a commit, not a branch. GitHub Pages always serves the current revision;

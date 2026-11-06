@@ -7,8 +7,8 @@ if [ "${CONFIRM_PUBLISH:-0}" != "1" ]; then
   echo "Re-run as: CONFIRM_PUBLISH=1 bash tools/publish.sh"
   exit 1
 fi
-REPO="dmisoko/nk"
-BASE="https://dmisoko.github.io/nk"
+REPO="dmisoko/nk-data"
+BASE="https://dmisoko.github.io/nk-data"
 
 echo "== authenticated as =="
 gh api user --jq .login || { echo "NOT AUTHENTICATED"; exit 1; }
