@@ -2,6 +2,9 @@
 Refractive Index Spectra Collections for TFTB thin film toolbox
 ===============================================================
 
+Derived from [ulfgri/nk](https://github.com/ulfgri/nk) by Ulf Griesmann; the
+machine-readable layer in `db/` and `catalog/` is maintained in this repository.
+
 Multilayer analysis software can only be as good as the optical
 constants that it uses. The data collections in this archive combine
 all publicly available refractive index data I could find on the Web,
@@ -108,22 +111,6 @@ Ulf Griesmann, September 2014
 ulf.griesmann@nist.gov
 ulfgri@gmail.com
 
-
-## Upstream and attribution
-
-This repository started as a fork of **https://github.com/ulfgri/nk** ("Optical
-constants of thin film materials") by Ulf Griesmann and is now published as an
-independent repository so that its history stays under this account.
-
-The original data files (`analytic/`, `coatings/`, `freesnell/`, `litho/`,
-`palik/`, `rii/`, `sopra/`, `various/`, `windt/`) are kept unchanged and the
-upstream commit history is preserved in this repository's history. Everything
-under `db/`, `catalog/`, `catalog.json`, `tools/` and `PROCESSING.md` was added
-here; see `NOTICE.md` for per-source provenance and `PROCESSING.md` for the
-normalisations applied.
-
-Please report problems with the original material files upstream; report
-problems with the derived layer here.
 
 ## Programmatic access
 
